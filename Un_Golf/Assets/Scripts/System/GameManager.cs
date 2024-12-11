@@ -141,7 +141,9 @@ public class GameManager : MonoBehaviour
                     else if (m.GetBoolean(1))
                     {
                         Application.Quit();
+#if UNITY_EDITOR
                         UnityEditor.EditorApplication.isPlaying = false;
+#endif
                     }
                     break;
                 case "Move":
