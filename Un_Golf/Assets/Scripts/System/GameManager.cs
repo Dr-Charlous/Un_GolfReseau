@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using PlayerIOClient;
 using TMPro;
-using static UnityEditor.PlayerSettings;
-using Unity.VisualScripting;
 
 public class ChatEntry
 {
@@ -57,7 +55,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Starting");
 
         PlayerIO.Authenticate(
-            "localprojectlesson-gkjgymhxxuygsorwtsnxg",            //Your game id
+            "golfgamejam-ymeiulkxaeydrmww43x9aq",            //Your game id
             "public",                               //Your connection id
             new Dictionary<string, string> {        //Authentication arguments
 				{ "userId", userid },
@@ -68,18 +66,15 @@ public class GameManager : MonoBehaviour
                 Debug.Log("Successfully connected to Player.IO");
                 _infomsg = "Successfully connected to Player.IO";
 
-                //_target.transform.Find("NameTag").GetComponent<TextMesh>().text = userid;
-                //_target.transform.name = userid;
-
                 Debug.Log("Create ServerEndpoint");
                 // Comment out the line below to use the live servers instead of your development server
-                client.Multiplayer.DevelopmentServer = new ServerEndpoint("localhost", 8184);
+                //client.Multiplayer.DevelopmentServer = new ServerEndpoint("localhost", 8184);
 
                 Debug.Log("CreateJoinRoom");
                 //Create or join the room 
                 client.Multiplayer.CreateJoinRoom(
                     "UnityDemoRoom",                    //Room id. If set to null a random roomid is used
-                    "UnityRoom",                   //The room type started on the server
+                    "UnityRoom",                        //The room type started on the server
                     true,                               //Should the room be visible in the lobby?
                     null,
                     null,
