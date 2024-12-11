@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using PlayerIOClient;
 using TMPro;
+using static UnityEditor.PlayerSettings;
 
 public class ChatEntry
 {
@@ -17,10 +18,16 @@ public class GameManager : MonoBehaviour
     [Header("Prefabs")]
     public GameObject Player;
     public GameObject PlayerPrefab;
+    public GameObject SpectatorPrefab;
+
+    [SerializeField] BallController _ballControl;
+    [SerializeField] Transform[] _SpawnLevels;
+    [SerializeField] int _actualLevel = 0;
 
     // UI stuff & other
     Connection _pioconnection;
     Dictionary<string, Transform> _players = new();
+    List<Transform> _playersList = new();
     List<Message> _msgList = new(); //  Messsage queue implementation
     ArrayList _entries = new();
     Vector2 _scrollPosition;
@@ -96,11 +103,6 @@ public class GameManager : MonoBehaviour
         );
     }
 
-    void Handlemessage(object sender, Message m)
-    {
-        _msgList.Add(m);
-    }
-
     void FixedUpdate()
     {
         // process message queue
@@ -111,16 +113,27 @@ public class GameManager : MonoBehaviour
                 case "PlayerJoined":
                     GameObject newPlayer = null;
 
-                    if (m.GetBoolean(3))
-                        newPlayer = Player;
-                    else
-                        newPlayer = Instantiate(PlayerPrefab);
+                    if (_players.Count < 4)
+                    {
+                        if (m.GetBoolean(1))
+                            newPlayer = Player;
+                        else
+                            newPlayer = Instantiate(PlayerPrefab);
 
-                    newPlayer.transform.position = new Vector3(m.GetFloat(1), 0, m.GetFloat(2));
+                        newPlayer.transform.position = _SpawnLevels[_actualLevel].position;
 
-                    newPlayer.name = m.GetString(0);
-                    if (!_players.ContainsKey(newPlayer.name))
-                        _players.Add(newPlayer.name, newPlayer.transform);
+                        newPlayer.name = m.GetString(0);
+                        if (!_players.ContainsKey(newPlayer.name))
+                        {
+                            _players.Add(newPlayer.name, newPlayer.transform);
+                            _playersList.Add(newPlayer.transform);
+                        }
+                    }
+                    else if (m.GetBoolean(1))
+                    {
+                        Player.SetActive(false);
+                        _ballControl.gameObject.SetActive(false);
+                    }
                     break;
                 case "Move":
                     if (m.GetString(0) != Player.name && _players.ContainsKey(m.GetString(0)))
@@ -141,9 +154,29 @@ public class GameManager : MonoBehaviour
                     break;
                 case "PlayerLeft":
                     // remove characters from the scene when they leave
-                    var player = _players[m.GetString(0)];
-                    _players.Remove(m.GetString(0));
-                    Destroy(player.gameObject);
+
+                    if (_players.ContainsKey(m.GetString(0)))
+                    {
+                        var player = _players[m.GetString(0)];
+                        _players.Remove(m.GetString(0));
+                        Destroy(player.gameObject);
+                    }
+                    break;
+                case "IsArrived":
+                    _players[m.GetString(0)].GetComponent<Ball>().IsArrived = m.GetBoolean(1);
+                    break;
+                case "NextLevel":
+                    _actualLevel++;
+
+                    if (_actualLevel >= _SpawnLevels.Length)
+                        _actualLevel = 0;
+
+                    for (int i = 0; i < _playersList.Count; i++)
+                    {
+                        _playersList[i].gameObject.SetActive(true);
+                        _playersList[i].position = _SpawnLevels[_actualLevel].position;
+                        _playersList[i].GetComponent<Ball>().IsArrived = false;
+                    }
                     break;
             }
         }
@@ -161,8 +194,33 @@ public class GameManager : MonoBehaviour
         string rot = $"{rotation.x} {rotation.y} {rotation.z}";
         _pioconnection.Send("Move", name, pos, rot);
     }
+    
+    public void IsArrived(string name, bool value)
+    {
+        _pioconnection.Send("IsArrived", name, value);
+    }
 
+    public void CheckEndLevel()
+    {
+        bool isLevelFinished = true;
+
+        foreach (var player in _players)
+        {
+            if (!player.Value.GetComponent<Ball>().IsArrived)
+                isLevelFinished = false;
+        }
+
+        if (isLevelFinished)
+        {
+            _pioconnection.Send("NextLevel");
+        }
+    }
     #region Ui
+    void Handlemessage(object sender, Message m)
+    {
+        _msgList.Add(m);
+    }
+
     void OnGUI()
     {
         _window = GUI.Window(1, _window, GlobalChatWindow, "Chat");

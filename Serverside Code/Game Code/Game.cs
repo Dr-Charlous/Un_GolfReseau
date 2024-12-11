@@ -37,12 +37,12 @@ namespace UnityChestServer
             {
                 if (pl.ConnectUserId == player.ConnectUserId)
                 {
-                    player.Send("PlayerJoined", player.ConnectUserId, 0, 0, true);
+                    player.Send("PlayerJoined", player.ConnectUserId, true);
                 }
                 else if (pl.ConnectUserId != player.ConnectUserId)
                 {
-                    pl.Send("PlayerJoined", player.ConnectUserId, 0, 0, false);
-                    player.Send("PlayerJoined", pl.ConnectUserId, 0, 0, false);
+                    pl.Send("PlayerJoined", player.ConnectUserId, false);
+                    player.Send("PlayerJoined", pl.ConnectUserId, false);
 
                     pl.Send("ChatSystem", player.ConnectUserId, player.ConnectUserId + " join");
                     player.Send("ChatSystem", pl.ConnectUserId, pl.ConnectUserId + " join");
@@ -89,6 +89,21 @@ namespace UnityChestServer
                         if (pl.ConnectUserId != player.ConnectUserId)
                         {
                             pl.Send("Chat", player.ConnectUserId, message.GetString(0));
+                        }
+                    }
+                    break;
+                case "NextLevel":
+                    foreach (Player pl in Players)
+                    {
+                        pl.Send("NextLevel", player.ConnectUserId);
+                    }
+                    break;
+                case "IsArrived":
+                    foreach (Player pl in Players)
+                    {
+                        if (pl.ConnectUserId != player.ConnectUserId)
+                        {
+                            pl.Send("IsArrived", player.ConnectUserId, message.GetBoolean(1));
                         }
                     }
                     break;
