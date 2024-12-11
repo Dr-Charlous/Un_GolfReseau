@@ -12,16 +12,15 @@ public class ChatEntry
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance;
+
     [Header("Prefabs")]
     public GameObject Player;
     public GameObject PlayerPrefab;
 
-    [Header("Other")]
-    public UiManager Ui;
-
     // UI stuff & other
     Connection _pioconnection;
-    List<Transform> _players = new();
+    Dictionary<string, Transform> _players = new();
     List<Message> _msgList = new(); //  Messsage queue implementation
     ArrayList _entries = new();
     Vector2 _scrollPosition;
@@ -32,6 +31,11 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        if (Instance == null)
+            Instance = this;
+        else
+            Debug.LogError("2 Instances");
+
         Application.runInBackground = true;
 
         // Create a random userid 
@@ -105,21 +109,29 @@ public class GameManager : MonoBehaviour
             switch (m.Type)
             {
                 case "PlayerJoined":
-                    GameObject newplayer = null;
+                    GameObject newPlayer = null;
 
                     if (m.GetBoolean(3))
-                        newplayer = Player;
+                        newPlayer = Player;
                     else
-                        newplayer = Instantiate(PlayerPrefab);
+                        newPlayer = Instantiate(PlayerPrefab);
 
-                    newplayer.transform.position = new Vector3(m.GetFloat(1), 0, m.GetFloat(2));
+                    newPlayer.transform.position = new Vector3(m.GetFloat(1), 0, m.GetFloat(2));
 
-                    newplayer.name = m.GetString(0);
-                    _players.Add(newplayer.transform);
+                    newPlayer.name = m.GetString(0);
+                    if (!_players.ContainsKey(newPlayer.name))
+                        _players.Add(newPlayer.name, newPlayer.transform);
                     break;
                 case "Move":
-                    //Transform piece = _piecesOnBoard[m.GetString(0)];
-                    //piece.position = new Vector3(m.GetFloat(1), 0, m.GetFloat(2));
+                    if (m.GetString(0) != Player.name && _players.ContainsKey(m.GetString(0)))
+                    {
+                        Transform obj = _players[m.GetString(0)];
+                        string[] position = m.GetString(1).Split(",");
+                        string[] rotation = m.GetString(2).Split(",");
+
+                        obj.position = new Vector3(float.Parse(position[0]), float.Parse(position[1]), float.Parse(position[2]));
+                        obj.rotation = Quaternion.Euler(float.Parse(rotation[0]), float.Parse(rotation[1]), float.Parse(rotation[2]));
+                    }
                     break;
                 case "Chat":
                     ChatText(m.GetString(0) + " says: " + m.GetString(1), false);
@@ -129,8 +141,9 @@ public class GameManager : MonoBehaviour
                     break;
                 case "PlayerLeft":
                     // remove characters from the scene when they leave
-                    GameObject playerd = GameObject.Find(m.GetString(0));
-                    Destroy(playerd);
+                    var player = _players[m.GetString(0)];
+                    _players.Remove(m.GetString(0));
+                    Destroy(player.gameObject);
                     break;
             }
         }
@@ -139,9 +152,14 @@ public class GameManager : MonoBehaviour
         _msgList.Clear();
     }
 
-    public void MovePieces(string name, Vector3 piecePosition)
+    public void MovePieces(string name, Vector3 position, Vector3 rotation)
     {
-        _pioconnection.Send("Move", name, piecePosition.x, piecePosition.z);
+        if (_pioconnection == null)
+            return;
+
+        string pos = $"{position.x},{position.y},{position.z}";
+        string rot = $"{rotation.x},{rotation.y},{rotation.z}";
+        _pioconnection.Send("Move", name, pos, rot);
     }
 
     #region Ui

@@ -11,7 +11,6 @@ namespace UnityChestServer
     {
         public int ActualPieces;
         public int Score;
-        public string ColorText = "";
     }
 
     [RoomType("UnityRoom")]
@@ -23,11 +22,6 @@ namespace UnityChestServer
             // anything you write to the Console will show up in the 
             // output window of the development server
             Console.WriteLine("Game is started: " + RoomId);
-
-            // respawn new toads each 5 seconds
-            //AddTimer(respawntoads, 5000);
-            // reset game every 2 minutes
-            //AddTimer(resetgame, 120000);
         }
 
         // This method is called when the last player leaves the room, and it's closed down.
@@ -41,7 +35,7 @@ namespace UnityChestServer
         {
             foreach (Player pl in Players)
             {
-                if (pl.ConnectUserId == player.ConnectUserId && player.ColorText == "")
+                if (pl.ConnectUserId == player.ConnectUserId)
                 {
                     player.Send("PlayerJoined", player.ConnectUserId, 0, 0, true);
                 }
@@ -78,14 +72,14 @@ namespace UnityChestServer
             {
                 // called when a player clicks on the ground
                 case "Move":
-                    Broadcast("Move", message.GetString(0), message.GetFloat(1), message.GetFloat(2));
+                    Broadcast("Move", message.GetString(0), message.GetString(1), message.GetString(2));
                     break;
                 case "Chat":
                     foreach (Player pl in Players)
                     {
                         if (pl.ConnectUserId != player.ConnectUserId)
                         {
-                            pl.Send("Chat", player.ConnectUserId, message.GetString(0), player.ColorText);
+                            pl.Send("Chat", player.ConnectUserId, message.GetString(0));
                         }
                     }
                     break;
