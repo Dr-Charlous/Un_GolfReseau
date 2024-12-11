@@ -30,6 +30,22 @@ namespace UnityChestServer
             Console.WriteLine("RoomId: " + RoomId);
         }
 
+        //public override bool AllowUserJoin(Player player)
+        //{
+        //    int maxplayers; //Default
+        //                    //Parse roomdata
+        //    if (!int.TryParse(RoomData["maxplayers"], out maxplayers))
+        //    {
+        //        maxplayers = 4; //Default
+        //    }
+        //    //Check if there's room for this player.
+        //    if (Players.Count() < maxplayers - 1)
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
         // This method is called whenever a player joins the game
         public override void UserJoined(Player player)
         {
