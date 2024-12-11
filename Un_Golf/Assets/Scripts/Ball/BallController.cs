@@ -7,33 +7,40 @@ public class BallController : MonoBehaviour
 {
     [SerializeField] Image _bar;
     [SerializeField] Rigidbody _rb;
-    [SerializeField] Transform _ball;
+    [SerializeField] Ball _ball;
     [SerializeField] Transform _targetDirection;
+    [SerializeField] int _hits = 0;
     [SerializeField] float _xRotation;
     [SerializeField] float _power = 10;
     [SerializeField] float _powerInput = 0;
 
-    Ball _ballComponent;
-
-    private void Start()
-    {
-        _ballComponent = _ball.GetComponent<Ball>();
-    }
-
     private void Update()
     {
-        if (!_ballComponent.IsArrived)
+        if (!_ball.IsArrived && _ball.IsTurn)
         {
             _xRotation = Input.GetAxis("Mouse X");
 
-            transform.position = _ball.position;
+            transform.position = _ball.transform.position;
             transform.rotation *= Quaternion.Euler(new Vector3(0, _xRotation, 0));
+
+            //Ui turn
+            if (_ball.IsTurn)
+            {
+                _targetDirection.gameObject.SetActive(true);
+                GameManager.Instance.Ui.ChangeHitUi(true);
+            }
 
             //Release button + power
             if (Input.GetMouseButtonUp(0))
             {
-                Vector3 rot = _targetDirection.position - _ball.position;
+                Vector3 rot = _targetDirection.position - _ball.transform.position;
                 _rb.AddForce(rot.normalized * (_powerInput * _power), ForceMode.Impulse);
+                _hits++;
+                GameManager.Instance.Ui.ChangeTextUi(_ball.name, _hits);
+                GameManager.Instance.Ui.ChangeHitUi(false);
+                GameManager.Instance.ChangeTurn();
+                _targetDirection.gameObject.SetActive(false);
+                _ball.IsTurn = false;
             }
 
             //Push button + increase power
@@ -53,12 +60,16 @@ public class BallController : MonoBehaviour
             //Ui
             _bar.fillAmount = _powerInput;
         }
+        else if (_ball.IsArrived && _ball.IsTurn)
+            GameManager.Instance.ChangeTurn();
     }
 
     private void FixedUpdate()
     {
         //Velocity stop
         if (_rb.velocity.magnitude < 0.1f)
-            _rb.velocity = Vector3.zero;
+        {
+            _ball.StopMove();
+        }
     }
 }

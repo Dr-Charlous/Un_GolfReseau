@@ -107,6 +107,12 @@ namespace UnityChestServer
                         }
                     }
                     break;
+                case "ChangeTurn":
+                    foreach (Player pl in Players)
+                    {
+                        pl.Send("ChangeTurn", player.ConnectUserId);
+                    }
+                    break;
             }
         }
     }

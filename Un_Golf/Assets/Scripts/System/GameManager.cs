@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using PlayerIOClient;
 using TMPro;
 using static UnityEditor.PlayerSettings;
+using Unity.VisualScripting;
 
 public class ChatEntry
 {
@@ -20,6 +21,8 @@ public class GameManager : MonoBehaviour
     public GameObject PlayerPrefab;
     public GameObject SpectatorPrefab;
 
+    [Header("Properties")]
+    public UiManager Ui;
     [SerializeField] BallController _ballControl;
     [SerializeField] Transform[] _SpawnLevels;
     [SerializeField] int _actualLevel = 0;
@@ -34,6 +37,7 @@ public class GameManager : MonoBehaviour
     Rect _window = new Rect(10, 10, 300, 150);
     string _inputField = "";
     string _infomsg = "";
+    int _turn = 0;
     bool _joinedroom = false;
 
     void Start()
@@ -116,23 +120,33 @@ public class GameManager : MonoBehaviour
                     if (_players.Count < 4)
                     {
                         if (m.GetBoolean(1))
+                        {
                             newPlayer = Player;
+                            GameManager.Instance.Ui.ChangeTextUi(_ballControl.name, 0);
+                        }
                         else
                             newPlayer = Instantiate(PlayerPrefab);
 
                         newPlayer.transform.position = _SpawnLevels[_actualLevel].position;
 
                         newPlayer.name = m.GetString(0);
+
+                        //First player connected
                         if (!_players.ContainsKey(newPlayer.name))
                         {
                             _players.Add(newPlayer.name, newPlayer.transform);
                             _playersList.Add(newPlayer.transform);
+                            if (_players.Count <= 1)
+                            {
+                                _playersList[0].GetComponent<Ball>().IsTurn = true;
+                                Ui.ChangeHitUi(true);
+                            }
                         }
                     }
                     else if (m.GetBoolean(1))
                     {
-                        Player.SetActive(false);
-                        _ballControl.gameObject.SetActive(false);
+                        Application.Quit();
+                        UnityEditor.EditorApplication.isPlaying = false;
                     }
                     break;
                 case "Move":
@@ -143,7 +157,7 @@ public class GameManager : MonoBehaviour
                         string[] rotation = m.GetString(2).Split(" ");
 
                         obj.position = new Vector3(float.Parse(position[0]), float.Parse(position[1]), float.Parse(position[2]));
-                        //obj.rotation = Quaternion.Euler(float.Parse(rotation[0]), float.Parse(rotation[1]), float.Parse(rotation[2]));
+                        obj.rotation = Quaternion.Euler(float.Parse(rotation[0]), float.Parse(rotation[1]), float.Parse(rotation[2]));
                     }
                     break;
                 case "Chat":
@@ -178,6 +192,13 @@ public class GameManager : MonoBehaviour
                         _playersList[i].GetComponent<Ball>().IsArrived = false;
                     }
                     break;
+                case "ChangeTurn":
+                    _turn++;
+                    if (_turn >= _playersList.Count)
+                        _turn = 0;
+
+                    _playersList[_turn].GetComponent<Ball>().IsTurn = true;
+                    break;
             }
         }
 
@@ -194,7 +215,12 @@ public class GameManager : MonoBehaviour
         string rot = $"{rotation.x} {rotation.y} {rotation.z}";
         _pioconnection.Send("Move", name, pos, rot);
     }
-    
+
+    public void ChangeTurn()
+    {
+        _pioconnection.Send("ChangeTurn");
+    }
+
     public void IsArrived(string name, bool value)
     {
         _pioconnection.Send("IsArrived", name, value);
@@ -215,6 +241,7 @@ public class GameManager : MonoBehaviour
             _pioconnection.Send("NextLevel");
         }
     }
+
     #region Ui
     void Handlemessage(object sender, Message m)
     {

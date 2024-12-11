@@ -6,6 +6,7 @@ public class Ball : MonoBehaviour
 {
     public Vector3 LastPos = Vector3.zero;
     public bool IsArrived = false;
+    public bool IsTurn = false;
 
     [SerializeField] Rigidbody _rb;
 
