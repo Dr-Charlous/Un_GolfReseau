@@ -126,11 +126,11 @@ public class GameManager : MonoBehaviour
                     if (m.GetString(0) != Player.name && _players.ContainsKey(m.GetString(0)))
                     {
                         Transform obj = _players[m.GetString(0)];
-                        string[] position = m.GetString(1).Split(",");
-                        string[] rotation = m.GetString(2).Split(",");
+                        string[] position = m.GetString(1).Split(" ");
+                        string[] rotation = m.GetString(2).Split(" ");
 
                         obj.position = new Vector3(float.Parse(position[0]), float.Parse(position[1]), float.Parse(position[2]));
-                        obj.rotation = Quaternion.Euler(float.Parse(rotation[0]), float.Parse(rotation[1]), float.Parse(rotation[2]));
+                        //obj.rotation = Quaternion.Euler(float.Parse(rotation[0]), float.Parse(rotation[1]), float.Parse(rotation[2]));
                     }
                     break;
                 case "Chat":
@@ -157,8 +157,8 @@ public class GameManager : MonoBehaviour
         if (_pioconnection == null)
             return;
 
-        string pos = $"{position.x},{position.y},{position.z}";
-        string rot = $"{rotation.x},{rotation.y},{rotation.z}";
+        string pos = $"{position.x.ToString()} {position.y.ToString()} {position.z.ToString()}";
+        string rot = $"{rotation.x} {rotation.y} {rotation.z}";
         _pioconnection.Send("Move", name, pos, rot);
     }
 
