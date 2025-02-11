@@ -215,7 +215,12 @@ public class GameManager : MonoBehaviour
 
     public void ChangeTurn()
     {
-        _pioconnection.Send("ChangeTurn");
+        if (_playersList.Count > 1)
+            _pioconnection.Send("ChangeTurn");
+        else
+        {
+            _playersList[0].GetComponent<Ball>().IsTurn = true;
+        }
     }
 
     public void IsArrived(string name, bool value)

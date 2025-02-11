@@ -54,6 +54,7 @@ namespace UnityChestServer
                 if (pl.ConnectUserId == player.ConnectUserId)
                 {
                     player.Send("PlayerJoined", player.ConnectUserId, true);
+                    player.Send("ChatSystem", pl.ConnectUserId, pl.ConnectUserId + " join");
                 }
                 else if (pl.ConnectUserId != player.ConnectUserId)
                 {

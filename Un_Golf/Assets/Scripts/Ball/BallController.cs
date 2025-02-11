@@ -38,9 +38,9 @@ public class BallController : MonoBehaviour
                 _hits++;
                 GameManager.Instance.Ui.ChangeTextUi(_ball.name, _hits);
                 GameManager.Instance.Ui.ChangeHitUi(false);
-                GameManager.Instance.ChangeTurn();
                 _targetDirection.gameObject.SetActive(false);
                 _ball.IsTurn = false;
+                GameManager.Instance.ChangeTurn();
             }
 
             //Push button + increase power
